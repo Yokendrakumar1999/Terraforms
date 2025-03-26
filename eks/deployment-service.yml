@@ -1,0 +1,58 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mindme
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: mindme
+  template:
+    metadata:
+      labels:
+        app: mindme
+    spec:
+      containers:
+      - name: mindme
+        image: nginx:latest  # ✅ Use Nginx image
+        ports:
+        - containerPort: 80  # ✅ Update the port to match Nginx default
+        volumeMounts:
+        - name: nginx-config
+          mountPath: /etc/nginx/nginx.conf
+          subPath: nginx.conf
+      volumes:
+      - name: nginx-config
+        configMap:
+          name: nginx-config
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mindme-service
+spec:
+  selector:
+    app: mindme
+  ports:
+  - protocol: TCP
+    port: 80  # ✅ Exposing Nginx on port 80
+    targetPort: 80
+  type: LoadBalancer
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: nginx-config
+data:
+  nginx.conf: |
+    events {}
+    http {
+      server {
+        listen 80;
+        location / {
+          root /usr/share/nginx/html;
+          index index.html;
+        }
+      }
+    }
